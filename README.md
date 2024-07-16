@@ -27,3 +27,7 @@ def get_db_connection():
     return conn
 
 Run the webapp by running the file powerplant_app.py in either the Docker or the Python Flask IDE/Terminal.
+
+Step 4: Add the entries to the database 
+Edit the sample_energy.csv
+Import it through the dashboard
