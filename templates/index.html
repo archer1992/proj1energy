@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Power Plants Data</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .container {
+            width: 90%;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        .filter-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .filter-container label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .legend {
+            background: white;
+            line-height: 1.5;
+            padding: 10px;
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 1000;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .legend h4 {
+            margin-top: 0;
+        }
+
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+            cursor: pointer;
+        }
+
+        .map-container {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <h1>Power Plants Data</h1>
+
+    <div class="container">
+        <div class="filter-container">
+            <label for="ownerTypeFilter">Filter by Owner Type:</label>
+            <select id="ownerTypeFilter">
+                <option value="">All</option>
+                <option value="NEW ENTRY">NEW ENTRY</option>
+                <option value="NON-NPC/IPP">NON-NPC/IPP</option>
+                <option value="NPC">NPC</option>
+                <option value="NPC-IPP">NPC-IPP</option>
+            </select>
+        </div>
+
+        <button id="importButton">Import CSV</button>
+        <input type="file" id="fileInput" style="display:none;">
+        <button id="exportButton">Export CSV</button>
+
+        <table id="datatable" class="display">
+            <thead>
+                <tr>
+                    <th>Facility Name</th>
+                    <th>Resource Category</th>
+                    <th>Technology Type</th>
+                    <th>Installed Capacity (MW)</th>
+                    <th>Dependable Capacity (MW)</th>
+                    <th>Location</th>
+                    <th>Region</th>
+                    <th>Island</th>
+                    <th>Operator</th>
+                    <th>Owner</th>
+                    <th>Owner Type</th>
+                </tr>
+            </thead>
+        </table>
+
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="legend">
+                <h4>Legend</h4>
+                <i style="background: green" onclick="filterByLegend('NEW ENTRY')"></i><span>NEW ENTRY</span><br>
+                <i style="background: black" onclick="filterByLegend('NON-NPC/IPP')"></i><span>NON-NPC/IPP</span><br>
+                <i style="background: red" onclick="filterByLegend('NPC')"></i><span>NPC</span><br>
+                <i style="background: blue" onclick="filterByLegend('NPC-IPP')"></i><span>NPC-IPP</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable
+            var table = $('#datatable').DataTable({
+                ajax: {
+                    url: '/data',
+                    dataSrc: ''
+                },
+                columns: [
+                    { data: 'facility_name' },
+                    { data: 'resource_category' },
+                    { data: 'technology_type' },
+                    { data: 'installed_capacity' },
+                    { data: 'dependable_capacity' },
+                    { data: 'location' },
+                    { data: 'region' },
+                    { data: 'island' },
+                    { data: 'operator' },
+                    { data: 'owner' },
+                    { data: 'owner_type' }
+                ]
+            });
+
+            // Filter dropdown for Owner Type
+            $('#ownerTypeFilter').on('change', function() {
+                var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                table.column(10).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
+
+            // Initialize Map
+            var map = L.map('map').setView([12.8797, 121.7740], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            function getColor(ownerType) {
+                switch (ownerType) {
+                    case 'NEW ENTRY':
+                        return 'green';
+                    case 'NON-NPC/IPP':
+                        return 'black';
+                    case 'NPC':
+                        return 'red';
+                    case 'NPC-IPP':
+                        return 'blue';
+                    default:
+                        return 'gray';
+                }
+            }
+
+            function updateMap() {
+                map.eachLayer(function (layer) {
+                    if (!!layer.toGeoJSON) {
+                        map.removeLayer(layer);
+                    }
+                });
+
+                var data = table.rows({ filter: 'applied' }).data();
+
+                data.each(function (d) {
+                    if (d.latitude && d.longitude) {
+                        var marker = L.circleMarker([d.latitude, d.longitude], {
+                            radius: 8,
+                            fillColor: getColor(d.owner_type),
+                            color: getColor(d.owner_type),
+                            weight: 1,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        }).addTo(map);
+
+                        marker.bindPopup(
+                            'Facility Name: ' + d.facility_name + '<br>' +
+                            'Resource Category: ' + d.resource_category + '<br>' +
+                            'Technology Type: ' + d.technology_type + '<br>' +
+                            'Installed Capacity (MW): ' + d.installed_capacity + '<br>' +
+                            'Dependable Capacity (MW): ' + d.dependable_capacity + '<br>' +
+                            'Location: ' + d.location + '<br>' +
+                            'Region: ' + d.region + '<br>' +
+                            'Island: ' + d.island + '<br>' +
+                            'Operator: ' + d.operator + '<br>' +
+                            'Owner: ' + d.owner + '<br>' +
+                            'Owner Type: ' + d.owner_type
+                        );
+                    }
+                });
+            }
+
+            table.on('draw', function () {
+                updateMap();
+            });
+
+            // Import CSV Button
+            $('#importButton').click(function () {
+                $('#fileInput').click();
+            });
+
+            $('#fileInput').change(function () {
+                var formData = new FormData();
+                formData.append('file', $('#fileInput')[0].files[0]);
+
+                $.ajax({
+                    url: '/import',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (data) {
+                        table.ajax.reload();
+                        alert('Data imported successfully');
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+            // Export CSV Button
+            $('#exportButton').click(function () {
+                window.location.href = '/export';
+            });
+        });
+
+        function filterByLegend(ownerType) {
+            $('#ownerTypeFilter').val(ownerType).trigger('change');
+        }
+    </script>
+</body>
+</html>
