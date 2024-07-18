@@ -23,7 +23,15 @@ def data():
     conn = get_db_connection()
     df = pd.read_sql('SELECT * FROM powerplants', conn)
     conn.close()
+    df = df[(df['resource_category'] != '') & (df['owner_type'] != '') & (df['island'] != '') & (df['region'] != '')]
     df['region'] = df['region'].apply(lambda x: f'Region {x}' if re.match(r'^\d+(-[A-Za-z])?$', x) else x)
+    df['region'] = df['region'].str.upper()
+    df['facility_name'] = df['facility_name'].str.upper()
+    df['resource_category'] = df['resource_category'].str.upper()
+    df['technology_type'] = df['technology_type'].str.upper()
+    df['island'] = df['island'].str.upper()
+    df['owner_type'] = df['owner_type'].str.upper()
+    df['dependable_capacity'] = df['dependable_capacity'].apply(lambda x: round(float(x), 2))
     return jsonify(df.to_dict(orient='records'))
 
 @app.route('/filters')
@@ -31,14 +39,14 @@ def filters():
     conn = get_db_connection()
     df = pd.read_sql('SELECT DISTINCT LOWER(resource_category) AS resource_category, LOWER(owner_type) AS owner_type, LOWER(island) AS island, LOWER(region) AS region FROM powerplants', conn)
     conn.close()
+    df = df[(df['resource_category'] != '') & (df['owner_type'] != '') & (df['island'] != '') & (df['region'] != '')]
     df['region'] = df['region'].apply(lambda x: f'region {x}' if re.match(r'^\d+(-[A-Za-z])?$', x) else x)
-    region_list = df['region'].dropna().unique().tolist()
-    region_list.sort(key=lambda x: (int(re.search(r'\d+', x).group()) if re.search(r'\d+', x) else float('inf'), x))
+    df['region'] = df['region'].str.upper()
     filters = {
         "resource_category": sorted(df['resource_category'].dropna().unique().tolist()),
         "owner_type": sorted(df['owner_type'].dropna().unique().tolist()),
         "island": sorted(df['island'].dropna().unique().tolist()),
-        "region": region_list
+        "region": sorted(df['region'].dropna().unique().tolist(), key=lambda x: (int(re.search(r'\d+', x).group()) if re.search(r'\d+', x) else float('inf'), x))
     }
     return jsonify(filters)
 

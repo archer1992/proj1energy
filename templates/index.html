@@ -29,7 +29,7 @@
         }
 
         .top-container {
-            display: flex;
+            display: flex; 
             justify-content: space-between;
         }
 
@@ -230,7 +230,7 @@
                 var select = $(selector);
                 var uniqueOptions = [...new Set(options)];
                 uniqueOptions.forEach(function(option) {
-                    if (option && option !== "RESOURCE CATEGORY" && option !== "OWNER TYPE" && option !== "ISLAND" && option !== "REGION") {
+                    if (option) {
                         select.append($('<option>').text(option.toUpperCase()).attr('value', option.toUpperCase()));
                     }
                 });
@@ -270,6 +270,15 @@
                     'GEOTHERMAL': '#bcbd22'
                 };
                 return colors[resourceType] || '#17becf';
+            }
+
+            function getIslandColor(island) {
+                var colors = {
+                    'LUZON': '#1f77b4',
+                    'VISAYAS': '#ff7f0e',
+                    'MINDANAO': '#2ca02c',
+                };
+                return colors[island] || '#17becf';
             }
 
             function createIcon(resourceType) {
@@ -426,7 +435,7 @@
 
                 console.log("Processed Region Data:", regionData);
                 var labels = Object.keys(regionData).filter(function (region) {
-                    return region !== "REGION"; // Ensure the graph data does not include "REGION"
+                    return region !== "RESOURCE CATEGORY" && region !== "OWNER TYPE" && region !== "ISLAND" && region !== ""; // Ensure the graph data does not include "RESOURCE CATEGORY", "OWNER TYPE", "ISLAND", or empty values
                 });
                 labels.sort(function(a, b) {
                     var aNum = a.match(/\d+/);
@@ -490,7 +499,7 @@
 
                 console.log("Processed Resource Data:", resourceData);
                 var labels = Object.keys(resourceData).filter(function (resourceType) {
-                    return resourceType !== "RESOURCE CATEGORY"; // Ensure the graph data does not include "RESOURCE CATEGORY"
+                    return resourceType !== "RESOURCE CATEGORY" && resourceType !== "OWNER TYPE" && resourceType !== "ISLAND" && resourceType !== ""; // Ensure the graph data does not include "RESOURCE CATEGORY", "OWNER TYPE", "ISLAND", or empty values
                 });
                 var datasets = [];
 
@@ -501,7 +510,7 @@
                             dataset = {
                                 label: island,
                                 data: [],
-                                backgroundColor: getColor(resourceType),
+                                backgroundColor: getIslandColor(island),
                                 stack: 'stack'
                             };
                             datasets.push(dataset);

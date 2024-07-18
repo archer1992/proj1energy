@@ -1,3 +1,4 @@
+Localhost Deployment
 Step 1: Install Required Libraries
 Make sure you have mysql-connector-python and flask installed:
 
@@ -24,3 +25,6 @@ def get_db_connection():
     return conn
 
 Run the webapp by running the file powerplant_app.py in either the Docker or the Python Flask IDE/Terminal.
+
+Ploomber Deployment
+Step 1
