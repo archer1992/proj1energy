@@ -34,8 +34,9 @@ def get_db_connection():
 Run the webapp by running the file powerplant_app.py in either the Docker or the Python Flask IDE/Terminal.
 
 Ploomber Cloud Deployment
+
 Step 1
-compress the webapp folder in zip file format, make sure it has these 3 files
+Compress the webapp folder in zip file format, make sure it has these 3 files
 
 app.py -> contains the flask code
 templates/index.html -> contains the web gui
