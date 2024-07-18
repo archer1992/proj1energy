@@ -14,5 +14,6 @@ CREATE TABLE powerplants (
     region VARCHAR(255),
     island VARCHAR(255),
     operator VARCHAR(255),
-    owner VARCHAR(255)
+    owner VARCHAR(255),
+    owner_type VARCHAR(255),
 );

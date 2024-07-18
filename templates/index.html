@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Power Plants Data</title>
+    <title>Philippine Energy Data by CREATE</title>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css">
@@ -10,112 +10,157 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f4f4f4;
+            font-size: 12px; /* Reduced base font size */
         }
 
         h1 {
             text-align: center;
-            margin-top: 20px;
+            margin: 20px 0;
+            color: #333;
         }
 
         .container {
-            width: 90%;
+            width: 100%; /* Adjusted to full width */
             margin: 0 auto;
-            margin-top: 20px;
+        }
+
+        .top-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .map-container, .graphs-container {
+            width: 48%;
+        }
+
+        #map {
+            height: 800px; /* Doubled the height */
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .graph {
+            height: 400px; /* Adjusted height for better visibility */
+            width: 100%;
+            margin-bottom: 20px;
         }
 
         .filter-container {
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .filter-container div {
+            margin-bottom: 10px;
+            flex: 1 1 200px;
             text-align: center;
         }
 
         .filter-container label {
             font-weight: bold;
             margin-right: 10px;
+            color: #555;
         }
 
-        #map {
-            height: 600px;
+        .filter-container select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 12px; /* Reduced font size */
             width: 100%;
+            max-width: 200px;
+        }
+
+        .table-container {
+            width: 100%; /* Adjusted to full width */
             margin-top: 20px;
         }
 
-        .legend {
-            background: white;
-            line-height: 1.5;
-            padding: 10px;
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            z-index: 1000;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        #datatable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px; /* Further reduced font size */
         }
 
-        .legend h4 {
-            margin-top: 0;
+        #datatable th, #datatable td {
+            padding: 5px;
+            text-align: left;
+            border: 1px solid #ddd;
         }
 
-        .legend i {
-            width: 18px;
-            height: 18px;
-            float: left;
-            margin-right: 8px;
-            opacity: 0.7;
-            cursor: pointer;
+        #datatable th {
+            background-color: #f4f4f4;
+            color: #333;
         }
 
-        .map-container {
-            position: relative;
+        .uppercase {
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
-    <h1>Power Plants Data</h1>
+    <h1>Philippine Energy Data by CREATE</h1>
 
-    <div class="container">
-        <div class="filter-container">
-            <label for="ownerTypeFilter">Filter by Owner Type:</label>
-            <select id="ownerTypeFilter">
-                <option value="">All</option>
-                <option value="NEW ENTRY">NEW ENTRY</option>
-                <option value="NON-NPC/IPP">NON-NPC/IPP</option>
-                <option value="NPC">NPC</option>
-                <option value="NPC-IPP">NPC-IPP</option>
+    <div class="filter-container">
+        <div>
+            <label for="resourceCategoryFilter">Resource Category:</label>
+            <select id="resourceCategoryFilter" data-column="1">
+                <option value="">ALL</option>
             </select>
         </div>
+        <div>
+            <label for="ownerTypeFilter">Owner Type:</label>
+            <select id="ownerTypeFilter" data-column="10">
+                <option value="">ALL</option>
+            </select>
+        </div>
+        <div>
+            <label for="islandFilter">Island:</label>
+            <select id="islandFilter" data-column="7">
+                <option value="">ALL</option>
+            </select>
+        </div>
+        <div>
+            <label for="regionFilter">Region:</label>
+            <select id="regionFilter" data-column="6">
+                <option value="">ALL</option>
+            </select>
+        </div>
+    </div>
 
-        <button id="importButton">Import CSV</button>
-        <input type="file" id="fileInput" style="display:none;">
-        <button id="exportButton">Export CSV</button>
-
-        <table id="datatable" class="display">
-            <thead>
-                <tr>
-                    <th>Facility Name</th>
-                    <th>Resource Category</th>
-                    <th>Technology Type</th>
-                    <th>Installed Capacity (MW)</th>
-                    <th>Dependable Capacity (MW)</th>
-                    <th>Location</th>
-                    <th>Region</th>
-                    <th>Island</th>
-                    <th>Operator</th>
-                    <th>Owner</th>
-                    <th>Owner Type</th>
-                </tr>
-            </thead>
-        </table>
-
-        <div class="map-container">
-            <div id="map"></div>
-            <div class="legend">
-                <h4>Legend</h4>
-                <i style="background: green" onclick="filterByLegend('NEW ENTRY')"></i><span>NEW ENTRY</span><br>
-                <i style="background: black" onclick="filterByLegend('NON-NPC/IPP')"></i><span>NON-NPC/IPP</span><br>
-                <i style="background: red" onclick="filterByLegend('NPC')"></i><span>NPC</span><br>
-                <i style="background: blue" onclick="filterByLegend('NPC-IPP')"></i><span>NPC-IPP</span>
+    <div class="container">
+        <div class="top-container">
+            <div class="map-container">
+                <div id="map"></div>
             </div>
+
+            <div class="graphs-container">
+                <canvas id="dependable-power-capacity-per-region" class="graph"></canvas>
+                <canvas id="dependable-power-capacity-per-resource" class="graph"></canvas>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="datatable" class="display">
+                <thead>
+                    <tr>
+                        <th>Facility Name</th>
+                        <th>Resource Category</th>
+                        <th>Technology Type</th>
+                        <th>Installed Capacity (MW)</th>
+                        <th>Dependable Capacity (MW)</th>
+                        <th>Location</th>
+                        <th>Region</th>
+                        <th>Island</th>
+                        <th>Operator</th>
+                        <th>Owner</th>
+                        <th>Owner Type</th>
+                    </tr>
+                </thead>
+            </table>
         </div>
     </div>
 
@@ -123,54 +168,94 @@
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        var currentFilterValue = null;
+        var currentLegendType = null;
+        var map;
+
         $(document).ready(function () {
             // Initialize DataTable
             var table = $('#datatable').DataTable({
                 ajax: {
                     url: '/data',
-                    dataSrc: ''
+                    dataSrc: function (data) {
+                        if (!data) {
+                            console.error("No data received");
+                            return [];
+                        }
+                        return data.map(function (row) {
+                            row.facility_name = row.facility_name ? row.facility_name.toUpperCase() : '';
+                            row.resource_category = row.resource_category ? row.resource_category.toUpperCase() : '';
+                            row.technology_type = row.technology_type ? row.technology_type.toUpperCase() : '';
+                            row.island = row.island ? row.island.toUpperCase() : '';
+                            row.owner_type = row.owner_type ? row.owner_type.toUpperCase() : '';
+                            row.region = row.region && row.region.match(/^\d+(-[A-Za-z])?$/) ? 'REGION ' + row.region.toUpperCase() : (row.region ? row.region.toUpperCase() : '');
+                            return row;
+                        });
+                    }
                 },
                 columns: [
-                    { data: 'facility_name' },
-                    { data: 'resource_category' },
-                    { data: 'technology_type' },
-                    { data: 'installed_capacity' },
-                    { data: 'dependable_capacity' },
-                    { data: 'location' },
-                    { data: 'region' },
-                    { data: 'island' },
-                    { data: 'operator' },
-                    { data: 'owner' },
-                    { data: 'owner_type' }
+                    { data: 'facility_name', className: 'uppercase' },
+                    { data: 'resource_category', className: 'uppercase' },
+                    { data: 'technology_type', className: 'uppercase' },
+                    { data: 'installed_capacity', className: 'uppercase' },
+                    { data: 'dependable_capacity', className: 'uppercase' },
+                    { data: 'location', className: 'uppercase' },
+                    { data: 'region', className: 'uppercase' },
+                    { data: 'island', className: 'uppercase' },
+                    { data: 'operator', className: 'uppercase' },
+                    { data: 'owner', className: 'uppercase' },
+                    { data: 'owner_type', className: 'uppercase' }
                 ]
             });
 
-            // Filter dropdown for Owner Type
-            $('#ownerTypeFilter').on('change', function() {
-                var val = $.fn.dataTable.util.escapeRegex($(this).val());
-                table.column(10).search(val ? '^' + val + '$' : '', true, false).draw();
+            // Fetch filter data and populate filter options
+            $.get('/filters', function(data) {
+                if (!data) {
+                    console.error("No filter data received");
+                    return;
+                }
+                populateFilterOptions('#resourceCategoryFilter', data.resource_category);
+                populateFilterOptions('#ownerTypeFilter', data.owner_type);
+                populateFilterOptions('#islandFilter', data.island);
+                populateFilterOptions('#regionFilter', data.region);
+            });
+
+            function populateFilterOptions(selector, options) {
+                var select = $(selector);
+                var uniqueOptions = [...new Set(options)];
+                uniqueOptions.forEach(function(option) {
+                    if (option && option !== "RESOURCE_CATEGORY" && option !== "OWNER_TYPE" && option !== "ISLAND" && option !== "REGION") {
+                        select.append($('<option>').text(option.toUpperCase()).attr('value', option.toUpperCase()));
+                    }
+                });
+            }
+
+            // Filter dropdowns
+            $('#resourceCategoryFilter, #ownerTypeFilter, #islandFilter, #regionFilter').on('change', function() {
+                var column = $(this).data('column');
+                var value = $(this).val();
+                if (value === "" || value === "ALL") {
+                    table.column(column).search('').draw();
+                } else if (column === 10 || column === 6) { // For owner_type and region filtering, ensure exact match
+                    table.column(column).search('^' + value + '$', true, false).draw();
+                } else {
+                    table.column(column).search(value).draw();
+                }
+                currentFilterValue = value;
+                currentLegendType = $(this).attr('id').replace('Filter', '');
             });
 
             // Initialize Map
-            var map = L.map('map').setView([12.8797, 121.7740], 6);
+            map = L.map('map').setView([12.8797, 121.7740], 6);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            function getColor(ownerType) {
-                switch (ownerType) {
-                    case 'NEW ENTRY':
-                        return 'green';
-                    case 'NON-NPC/IPP':
-                        return 'black';
-                    case 'NPC':
-                        return 'red';
-                    case 'NPC-IPP':
-                        return 'blue';
-                    default:
-                        return 'gray';
-                }
+            function getColor(index) {
+                var colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+                return colors[index % colors.length];
             }
 
             function updateMap() {
@@ -181,6 +266,8 @@
                 });
 
                 var data = table.rows({ filter: 'applied' }).data();
+
+                var bounds = L.latLngBounds();
 
                 data.each(function (d) {
                     if (d.latitude && d.longitude) {
@@ -194,60 +281,226 @@
                         }).addTo(map);
 
                         marker.bindPopup(
-                            'Facility Name: ' + d.facility_name + '<br>' +
-                            'Resource Category: ' + d.resource_category + '<br>' +
-                            'Technology Type: ' + d.technology_type + '<br>' +
-                            'Installed Capacity (MW): ' + d.installed_capacity + '<br>' +
-                            'Dependable Capacity (MW): ' + d.dependable_capacity + '<br>' +
-                            'Location: ' + d.location + '<br>' +
-                            'Region: ' + d.region + '<br>' +
-                            'Island: ' + d.island + '<br>' +
-                            'Operator: ' + d.operator + '<br>' +
-                            'Owner: ' + d.owner + '<br>' +
-                            'Owner Type: ' + d.owner_type
+                            'Facility Name: ' + (d.facility_name || '') + '<br>' +
+                            'Resource Category: ' + (d.resource_category || '') + '<br>' +
+                            'Technology Type: ' + (d.technology_type || '') + '<br>' +
+                            'Installed Capacity (MW): ' + (d.installed_capacity || '') + '<br>' +
+                            'Dependable Capacity (MW): ' + (d.dependable_capacity || '') + '<br>' +
+                            'Location: ' + (d.location || '') + '<br>' +
+                            'Region: ' + (d.region || '') + '<br>' +
+                            'Island: ' + (d.island || '') + '<br>' +
+                            'Operator: ' + (d.operator || '') + '<br>' +
+                            'Owner: ' + (d.owner || '') + '<br>' +
+                            'Owner Type: ' + (d.owner_type || '')
                         );
+
+                        bounds.extend(marker.getLatLng());
                     }
                 });
+
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds);
+                } else {
+                    map.setView([12.8797, 121.7740], 6);
+                }
             }
 
             table.on('draw', function () {
                 updateMap();
+                updateRegionGraph();
+                updateResourceGraph();
             });
 
-            // Import CSV Button
-            $('#importButton').click(function () {
-                $('#fileInput').click();
-            });
-
-            $('#fileInput').change(function () {
-                var formData = new FormData();
-                formData.append('file', $('#fileInput')[0].files[0]);
-
-                $.ajax({
-                    url: '/import',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (data) {
-                        table.ajax.reload();
-                        alert('Data imported successfully');
+            // Chart.js Graph for Dependable Power Capacity per Region
+            var regionGraphCtx = document.getElementById('dependable-power-capacity-per-region').getContext('2d');
+            var regionGraph = new Chart(regionGraphCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var dataset = context.dataset;
+                                    var raw = context.raw;
+                                    return dataset.label + ': REGION ' + raw.region + ', Capacity: ' + raw.capacity + ' MW';
+                                }
+                            }
+                        }
                     },
-                    error: function (xhr, status, error) {
-                        alert('Error: ' + xhr.responseJSON.error);
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true
+                        }
                     }
-                });
+                }
             });
 
-            // Export CSV Button
-            $('#exportButton').click(function () {
-                window.location.href = '/export';
+            // Chart.js Graph for Dependable Power Capacity per Resource Type
+            var resourceGraphCtx = document.getElementById('dependable-power-capacity-per-resource').getContext('2d');
+            var resourceGraph = new Chart(resourceGraphCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var dataset = context.dataset;
+                                    var raw = context.raw;
+                                    return dataset.label + ': ' + raw.resource_type + ', Capacity: ' + raw.capacity + ' MW';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    }
+                }
+            });
+
+            function updateRegionGraph() {
+                var data = table.rows({ filter: 'applied' }).data().toArray();
+                console.log("Region Graph Data:", data);
+                var regionData = {};
+
+                data.forEach(function (d) {
+                    var region = d.region;
+                    var resourceType = d.resource_category;
+                    var capacity = parseFloat(d.dependable_capacity);
+
+                    if (!regionData[region]) {
+                        regionData[region] = {};
+                    }
+
+                    if (!regionData[region][resourceType]) {
+                        regionData[region][resourceType] = 0;
+                    }
+
+                    regionData[region][resourceType] += capacity;
+                });
+
+                console.log("Processed Region Data:", regionData);
+                var labels = Object.keys(regionData).filter(function (region) {
+                    return region !== "REGION"; // Ensure the graph data does not include "REGION"
+                });
+                labels.sort(function(a, b) {
+                    var aNum = a.match(/\d+/);
+                    var bNum = b.match(/\d+/);
+                    if (aNum && bNum) {
+                        return parseInt(aNum[0]) - parseInt(bNum[0]);
+                    }
+                    return a.localeCompare(b);
+                });
+                var datasets = [];
+
+                labels.forEach(function (region) {
+                    Object.keys(regionData[region]).forEach(function (resourceType) {
+                        var dataset = datasets.find(d => d.label === resourceType);
+                        if (!dataset) {
+                            dataset = {
+                                label: resourceType,
+                                data: [],
+                                backgroundColor: getColor(datasets.length),
+                                stack: 'stack'
+                            };
+                            datasets.push(dataset);
+                        }
+
+                        dataset.data.push({
+                            x: region,
+                            y: regionData[region][resourceType],
+                            region: region,
+                            resource_type: resourceType,
+                            capacity: regionData[region][resourceType]
+                        });
+                    });
+                });
+
+                console.log("Region Graph Datasets:", datasets);
+                regionGraph.data.labels = labels;
+                regionGraph.data.datasets = datasets;
+                regionGraph.update();
+            }
+
+            function updateResourceGraph() {
+                var data = table.rows({ filter: 'applied' }).data().toArray();
+                console.log("Resource Graph Data:", data);
+                var resourceData = {};
+
+                data.forEach(function (d) {
+                    var resourceType = d.resource_category;
+                    var island = d.island;
+                    var capacity = parseFloat(d.dependable_capacity);
+
+                    if (!resourceData[resourceType]) {
+                        resourceData[resourceType] = {};
+                    }
+
+                    if (!resourceData[resourceType][island]) {
+                        resourceData[resourceType][island] = 0;
+                    }
+
+                    resourceData[resourceType][island] += capacity;
+                });
+
+                console.log("Processed Resource Data:", resourceData);
+                var labels = Object.keys(resourceData).filter(function (resourceType) {
+                    return resourceType !== "RESOURCE CATEGORY"; // Ensure the graph data does not include "RESOURCE CATEGORY"
+                });
+                var datasets = [];
+
+                labels.forEach(function (resourceType) {
+                    Object.keys(resourceData[resourceType]).forEach(function (island) {
+                        var dataset = datasets.find(d => d.label === island);
+                        if (!dataset) {
+                            dataset = {
+                                label: island,
+                                data: [],
+                                backgroundColor: getColor(datasets.length),
+                                stack: 'stack'
+                            };
+                            datasets.push(dataset);
+                        }
+
+                        dataset.data.push({
+                            x: resourceType,
+                            y: resourceData[resourceType][island],
+                            island: island,
+                            resource_type: resourceType,
+                            capacity: resourceData[resourceType][island]
+                        });
+                    });
+                });
+
+                console.log("Resource Graph Datasets:", datasets);
+                resourceGraph.data.labels = labels;
+                resourceGraph.data.datasets = datasets;
+                resourceGraph.update();
+            }
+
+            table.on('draw', function () {
+                updateMap();
+                updateRegionGraph();
+                updateResourceGraph();
             });
         });
-
-        function filterByLegend(ownerType) {
-            $('#ownerTypeFilter').val(ownerType).trigger('change');
-        }
     </script>
 </body>
 </html>
